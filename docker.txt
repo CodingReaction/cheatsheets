@@ -1,0 +1,63 @@
+docker images
+docker pull <image-name>:<version-name-or-number?>
+docker image rm <image-name>
+
+#create the container
+docker create <image-name> //docker create mysql
+ docker create -p27017:27017 --name monguito mongo // docker create -p<PUERTO DE MI PC: PUERTO DE DOCKER> ...
+docker create --name <container-name> -e ENVIRONMENT_VAR1=val -e ENVIRONMENT_VAR2=val2 <image-name>
+docker ps -a
+
+docker rm <container-name>
+#run
+docker start <container-id from $docker ps>
+docker stop <container-id or name>
+#logs
+docker logs --follow <container-name>
+
+#comando atajo
+docker run mongo      [-d]
+        <image-name>  dettach para ir a la linea de comandos
+
+#para empaquetar codigo
+1)Crear Dockerfile
+2)rellenarlo
+
+FROM node               //<image-name>
+RUN mkdir -p /home/app  //carpeta que contiene nuestra aplicacion, ruta dentro del container 
+COPY . /home/app        //mueve cosas del sistema operativo al container
+EXPOSE 3000             //exponer puerto dentro del container para que otros containers se conecten a este container
+CMD ["node", "/home/app/index.js"] // comando dentro del container que arranca la aplicacion cuando hagamos docker start
+
+#networks
+docker network ls
+docker network create <nombre-red>
+docker build -t <nombre-imagen>:<etiqueta> <path a Dockerfile> // docker build -t miapp:1.0.1
+
+docker create -p27017:27017 --name image-name --network mired -e ENV_VAR1=val1 -e ENV_VAR2=val2 base-image
+
+#compose
+docker compose up
+docker compose down
+docker compose -f docker-compose.dev.yml up
+# create docker-compose.yml
+version: "3.9" //docker version
+services:
+  chanchito:
+    build: .
+    ports:
+      - "3000:3000"
+    links:
+      - monguito
+  monguito:
+    image: mongo
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=nico
+      - MONGO_INITDB_ROOT_PASSWORD=password
+
+#volumenes: 3 tipos
+- Anonimos: solo indicas la ruta pero no son referenciables
+- De anfitrion a host: que carpeta montar y donde
+- Nombrado: como el anonimo pero podemos referencialo a futuro

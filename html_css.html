@@ -1,0 +1,70 @@
+<!-- META TAGS -->
+
+charset="utf-8"
+viewport "width=device-width, initial-scale=1.0" // name content
+description
+keywords
+
+
+<!-- TABLES -->
+<table>
+  <thead>
+    <tr>
+      <th>Col 1</th>
+      <th>Col 2</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>1</td><td>2</td></tr>
+  </tbody>
+
+<form action="/" method="POST">
+  <label for="username-id"></label>
+  <input type="text" name="username" id="username-id" placeholder="Username here.."/>
+  <input type="password" name="password" id="password">
+  <input type="number" name="age" id="age" min="0" max="130">
+  <textarea name="bio" id="" cols="30" rows="10"></textarea>
+  <input type="checkbox" name="is_adult" id="is_adult" checked>
+  <input type="radio" name="sex" id="male" value="male">
+  <input type="radio" name="sex" id="female" value="female">
+  <select name="food" id="food">
+    <option value="chicken">Chicken</option>
+    <option value="meat">Meat</option>
+  </select>
+  <button type="submit"></button>
+</form>
+
+flex: 1 // grown shrink basis
+
+grid-template-columns: 200px 1fr 1fr auto repeat(3, 1fr); /fr = fraction
+grid-gap: 1rem;
+
+grid-column: 1 / span 3;
+grid-row: 1 / 4;
+
+:root {
+  --primary-color: red;
+}
+
+p{
+  color: var(--primary-color);
+}
+
+@keyframes my-animation{
+  from{
+    color: blue;
+  }
+  to{
+    width: 350px;
+  }
+}
+
+.elem{
+  animation-name: my-animation;
+  animation-duration: 2s;
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+  animation-delay: 2s;
+  animation-direction: alternate;
+  animation-timming-function: ease;
+}
