@@ -79,7 +79,10 @@ Route::apiResource('photos', PhotoController::class); // or photos.comments for 
 Route::singleton('profile', ProfileController::class);
 
 $url = route('index', OPTIONAL_PARAMS_DICT);
+
 return redirect()->route('index');
+return redirect('form')->withInput() // withInput($request->except('password'))
+
 if ($request->route()->named('profile')){...} // Inspecting the current route
 $route = Route::current(); // ::currentRouteName(), ::currentRouteAction()
 
@@ -120,8 +123,80 @@ PUT    /photos/{photo}       update   photos.update
 PATCH
 DELETE /photos/{photo}       destroy  photos.destroy
 
+/*************** REQUEST ***********************/
+$host   = $request->host();
+$uri    = $request->path();
+$url    = $request->url(); // ->fullUrl() for url with query string
+$method = $reuqest->method();
+$header = $request->header("X-Header-Name");
+$token  = $request->bearerToken();
+$cookie = $request->cookie('name');
+$file   = $request->file('photo'); // $file = $request->photo;
+$fileP  = $request->photo->path();
+$fileEx = $request->photo->extension();
+$pathSt = $request->photo->store('images', OPTIONAL_DISK_NAME); // 's3' for example
+$pathSt = $request->photo->storeAs('images', 'filename.jpg');
+$ipAddr = $request->ip();
+$cTypes = $request->getAcceptableContentTypes();
+$request->fullUrlWithQuery(['type' => 'phone']); // merge with type=phone
+if ($request->is('admin/*')){...} // ->routeIs('admin.*')
+if ($request->isMethod('post')){...}
+if ($request->hasHeader('X-Header-Name')){...}
+if ($request->accepts(['text/html', 'application/json']){...}
+if ($request->expectsJson()){...}
+if ($request->has('name')){...}
+if ($request->hasAny(['name', 'email']){...}
+if ($request->filled('name')){...}
+if ($request->missing('name')){...}
+if ($request->file('photo')->isValid()){...}
+
+$request->whenHas('name', function (string $input){...});
+$request->merge(['votes' => 0]);
+$request->mergeIfMissing(['votes' => 0]);
+
+$request->flash();
+$request->flashOnly(['username', 'email']);
+$request->flashExcept('password');
+
+$username = $request->old('username'); // {{ old('username') }} in blade template
 
 
+$input  = $request->all(); // from form
+$input  = $request->collect(); // collect('users')->each(function (string $user){...});
+$name   = $request->input('name', OPTIONAL_DEFAULT); // also input('products.0.name')
+$input  = $request->input(); //valid also for json if content type is application/json
+$name   = $request->query('name'); // from query string, same api as input()
+$name   = $request->string('name')->trim(); // also ->boolean()/date()
+$status = $request->enum('status', Status::class);
+$input  = $request->only(['username', 'password']); // ->except(['credit_card'])
+
+/************* RESPONSE *************************/
+Route::get('/user/{user}', function(User $user){
+  return "Hello world";
+  return [1, 2, 3];
+  return $user;
+  return redirect('home/dashboard')
+  return redirect()->route('login')
+  return redirect()->route('profile', ['id' => 1])
+  return redirect()->route('profile', [$user])
+  return back()->withInput()
+  return redirect()->action([UserController::class, 'index'], OPTIONAL_PARAMS_DICT)
+  return redirect()->away('https://google.com')
+  return redirect('dashboard')->with('status', 'Profile updated!') // {{ session('status') }}
+  return response()->view('hello', $data, 200) // or use ->view(...)->with('name', 'Max')
+  return response()->json(['name'=>'Max', 'state'=> 'SA')
+  return response()->download($pathToFile, OPTIONAL_NAME, OPTIONAL_HEADERS)
+  return response()->file($pathToFile, OPTIONAL_HEADERS)
+  return response('hello world', 200)
+	   ->cookie($cookie) // using $cookie = cookie('name', 'value', $minutes)
+	   ->cookie('name', 'value', $duration, $path, $domain, $secure, $httpOnly)
+           ->withoutCookie('name')
+           ->header('Content-Type', 'text/plain')
+   	   ->withHeaders([
+		'X-Header-One' => 'Header Value'])
+
+/************* VIEWS *****************************/
+php artisan make:view greeting
 
 /***************** BREEZE ***********************/
 composer require laravel/breeze --dev

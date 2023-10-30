@@ -271,7 +271,30 @@ data = {"subjet": "hello", "message": "Hi there"}
 file_data = {"mugshot": SimpleUploadedFile("face.jpg", b"file data")}
 form = ContactFormWithMugshot(data, file_data) # in the example
 form = ContactFormWithMugshot(request.POST, request.FILES) # in practice
+form = ContactForm(initial={"subject": "Hi there!"}) #autofill unbound form at runtime, ex. with username session
+
+form.is_valid()
 form.is_multipart() # True
+form.is_bound() # true or false if have or not data, emtpy dict = bound with empty data
+form.has_changed() # if changed from initial data
+form.changed_data  #list of names of fields with values different from initial
+form.cleaned_data
+form.fields
+form.hidden_fields
+form.errors #{'username': ['Must include digits', 'too short'], 'email': ['Already used']}
+form.non_field_errors()
+form.errors.as_json() #{"email":[{"message": "invalid email", "code": "invalid"}]}
+form.add_error(TODO)
+form.has_error(field_name, code=None)
+
+form["email"].data         # "max@max.com" or None
+form["email"].value()      # "max@max.com" or Initial, rendered the same way widget would do
+form.fields["email"]       # <input type=... />
+form.fields["email"].label # <label for=... >
+
+form["email"].errors # ['This field is required']
+form["email"].help_text
+form["email"].widget_type
 
 ############################## Auth && permissions        ##############################
 u = User.objects.get(username="max") #change password
