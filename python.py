@@ -30,6 +30,7 @@ if isinstance(age, int):
     pass
 
 copy.copy() / copy.deepcopy()
+########################### Functional programming ##########################
 
 ########################### Metaprogramming: dunder methods ##################
 
@@ -142,6 +143,21 @@ class PersonData:
     age: int = 18
     name: str = ""
 
+a, b, c, *rest, d = [1, 2, 3, 4, 5, 6] # rest=[4,5], d=6
+
+
+########################## ITERATORS ####################
+def my_iterator():
+    try:
+        for i in range(0, 10):
+            yield i
+    except StopIteration:
+        return
+
+
+for num in my_iterator():
+    print(num)
+
 ########################### ASYNC: asyncio
 
 async def main():
@@ -175,6 +191,11 @@ math
 pathlib
 os
 json
+functools # reduce
+typing
+collections # defaultdict, OrderedDict, Counter
+datetime
+array
 
 ########################### context manager ############################
 
@@ -187,6 +208,15 @@ my_file.write(contents) # override with data from the last seek position
 my_file.writelines(["line1", "line2"]) #doesnt insert \n chars
 print(data1, data2, sep=",", file=my_file)
 my_file.truncate()
+
+########################## Testing
+$python3 -m unittest -v
+
+import unittest
+
+class TestMain(unitest.TestCase):
+    def test_something(self):
+        self.assertEquals(1, 2)
 
 ########################## write to json #################################
 with open('nearby.json', 'w') as json_file:
@@ -252,3 +282,8 @@ time_fun2 = timeit(fun2)
 
 print("benchmark fun 1: ", time_fun1, sep="\t")
 print("benchmark fun 2: ", time_fun2, sep="\t")
+
+################################### SYSTEM
+import sys
+
+sys.argv

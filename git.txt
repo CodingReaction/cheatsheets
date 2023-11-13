@@ -1,0 +1,2 @@
+git commit --amend    # add more files or change message: AVOID ON PUBLIC BRANCHES
+
