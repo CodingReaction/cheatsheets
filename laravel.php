@@ -195,8 +195,32 @@ Route::get('/user/{user}', function(User $user){
    	   ->withHeaders([
 		'X-Header-One' => 'Header Value'])
 
+/************* CACHE *****************************/
+$cached_thing = cache()->remember('CACHE DATA KEY', MINUTES TIME, function() use ($closure_data){
+  return FILE FROM DISK or SOMETHING expensive;		
+});
+
 /************* VIEWS *****************************/
 php artisan make:view greeting
+
+#layout.blade.php
+@yield('content')
+
+#post.blade.php
+@extends("layout.blade.php")
+@section("content")  @endsection
+@foreach ($users as $user)... @endforeach
+
+@props(["name"])
+
+/***************** FACADES **********************/
+\Illuminate\Support\Facades\DB::listen(function ($query){
+    logger($query->sql);
+});
+
+/***************** FACTORIES ********************/
+User::truncate();
+User::factory(QUANTITY_DEFAULT_1)->create();
 
 /***************** BREEZE ***********************/
 composer require laravel/breeze --dev
@@ -204,6 +228,7 @@ php artisan breeze:install
 php artisan migrate
 npm install
 npm run dev
+
 
 /***************** JEETSTREAM *******************/
 TODO:

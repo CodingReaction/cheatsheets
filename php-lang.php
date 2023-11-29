@@ -1,3 +1,40 @@
+
+$resource_from_disk = file_get_contents(__DIR__ . '/../' . 'data.json');
+
+
+echo "<pre>"
+var_dump("anything")
+die()
+echo "</pre>"
+
+parse_url($_SERVER['REQUEST_URI']); // ['path'=>..., 'query'=>...]
+http_build_query($data); // concatenate a Dict in order to create a querystring
+http_response_code(500); // returns the status code as result
+
+call_user_func($my_func);
+password_hash($password, PASSWORD_BCRYPT);
+
+// LOGOUT
+$_SESSION = [];
+session_destroy();
+$params = session_get_cookie_params();
+setcookie('PHPSESSIONID', '', time()-3600, $params['path'], $params['domain'], $params['httponly']);
+header("Location: /");
+exit();
+				    
+
+$root_folder = __DIR__ . "..";
+extract($attrArray); // import symbols to current closure
+				    
+if (array_key_exists($key, $array)){...}
+
+$className = (new ReflextionClass($this))->getShortName();
+
+/*************** SHORTHAND SINTAX ***************/
+<?php foreach ($names as $name): ?>
+  <?= $name ?>
+<?php endforeach; ?>
+
 /***************  BASIC SCRIPT *******************/
 <?php
   $name = "Max";
@@ -81,6 +118,8 @@ $names = ["Max", "Otto"];
 [$a, $b] = $names;
 
 array_push($names, "Sergio");
+$names[] = "Sergio"; // SHORTHAND push to array
+
 $name_last  = array_pop($names); // "Sergio"
 $name_first = array_shift($names); // "Max"
 $names_rev  = array_reverse($names);
@@ -116,6 +155,7 @@ implode(" ", $pharagraph); // join
 str_replace("-", "", $phone);
 
 $username = filter_input(INPUT_POST, "username", FILTER_SANITIZE_SPECIAL_CHARS); // FILTER_SANITIZE_NUMBER_INT | SANITIZE_EMAIL | VALIDATE_INT
+filter_var($value, FILTER_VALIDATE_EMAIL);
 
 $password_hashed = password_hash($password, PASSWORD_DEFAULT); // bcrypt
 password_verify($password, $password_hashed);
@@ -156,6 +196,11 @@ password_verify($password, $password_hashed);
  mysqli_close($connection);
 
  // PDO
+ $dsn = "mysql:host=localhost;port=3306;dbname=my_db;user=root;password=1234;charset=utf8mb4;"
+ $pdo = new PDO($dsn, 'root', 'password', [PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,]);
+ $statement = $pdo->prepare(MY_SQL_QUERY);
+ $statement->execute();
+ $results = $statement->fetchAll();
  
 ?>
 /************* OOP *******************************/
