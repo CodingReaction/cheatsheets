@@ -100,14 +100,31 @@ def lower(value):
 https://docs.djangoproject.com/en/4.2/howto/custom-template-tags/#writing-custom-template-tags
 
 ################# Queues    ####################################
-https://realpython.com/asynchronous-tasks-with-django-and-celery/
+## Basic docker-compose.yml
+celery:
+    build: ./project
+    command: celery --app=core worker --loglevel=info --logfile=logs/celery.log
+    volumes:
+        - ./project:/usr/src/app # /usr/src/app is the WORKDIR
+    environment:
+        - DEBUG=1
+        - SECRET_KEY=django-secret-key
+        - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]
+        - CELERY_BROKER=redis://redis:6379/0
+        - CELERY_BACKEND=redis://redis:6379/0
+    depends_on:
+        - django_web
+        - redis
+
+## settings on settings.py
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_BROKER', 'redis://redis:6379/0')
 
 #celery.py: in /
 import os
 from celery import Celery
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', my_site.settings)
 
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', my_site.settings)
 app = Celery('my_site')
 app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()
@@ -128,11 +145,37 @@ def send_issue(issue_id):
 def send_email(email, title, content):
     send_mail(title, content, 'newsletter@gmail.com', [email], fail_silently=False)
 
-# for sending the first msg, go to a view or admin action and do something like:
+### a view triggering a task
+from tasks.sample_tasks import create_task
+
+@csrf_exempt
+def run_task(request):
+    if request.POST:
+        task_type = request.POST.get("type")
+        task = create_task.delay(int(task_type))
+        return JsonResponse({"task_id": task.id}, status=202)
+
+from celery.result import AsyncResult
+
+def get_status(request, task_id):
+    task_result = AsyncResult(task_id)
+    result = {
+        "task_id": task_id,
+        "task_status": task_result.status,
+        "task_result": task_result.result
+    }
+    return JsonResponse(result, status=200)
+
+### for sending the first msg, go to a view or admin action and do something like:
 from . import tasks
 tasks.send_issue.delay(issue.id)
 
-# CLI
+### autoimport celery when Django starts
+from .celery import app as celery_app
+
+__all__ = ("celery_app", )
+
+### CLI
 $celery -A my_site worker --loglevel=INFO
 
 ### CELERY BEAT for scheduled tasks
