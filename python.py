@@ -82,6 +82,11 @@ def __ge__(self, other):        # Greater than OR equal
 def __call__(self, other):
     return self.age*3
 
+__class__ = ""
+
+__metaclass__ = ""
+
+
 __enter__(self) | __exit__(self) # used for context managers (with bla...)
 
 class MyClass:
@@ -124,6 +129,11 @@ class Singleton:                    # Third __new__ : creating a singleton
         if cls.instance == None:
             cls.instance = super().__new__(cls)
         return cls.instance
+
+########################### Metaprogramming: Dinamic class with type
+
+# Classes are also objects! A metaclass defines a class
+Employee = type("Employee", (User,), {"name": "", "get_age": get_age}) #hasattr(Employee, 'get_age') = True
 
 ########################### Type Hints
 int | float | bool | str | bytes #built ins
