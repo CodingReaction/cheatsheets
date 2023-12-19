@@ -1,3 +1,5 @@
+################### auth vs api
+http -a admin:password1234 POST http://..:8000/api
 ################### req / res
 request.data
 request.method
@@ -30,16 +32,21 @@ user_serialized.is_valid()
 user_serialized.validated_data
 user_serialized.save()
 
-################### permissions
+################### permissions ########################
+
+# 2 ways: using view based permissions VS using object level permissions
 
 IsAuthenticated
 permissions_classes = [IsAuthenticatedOrReadOnly,]
+
 #### Custom: ex -> only author can edit the resource
 class IsOwnerOrReadOnly(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
             return True
         return obj.author == request.user
+
+permissions_classes = [permissions.IsAuth..., IsOwnerOrReadOnly]
 
 
 ################## views & viewsets: function based / class based / mixins / generic class based
@@ -83,10 +90,6 @@ def get(self, request, *args, **kwargs):
 # viewset for reading: ReadOnlyModelViewSet instead of RetrieveModelMixin/ListModelMixin or ListAPIView/RetrieveAPIView
 #                      ModelViewset instead of the generic class based ones
 
-HOW TO ADD CUSTOM ENDPOINT TO VIEWSETS?
-@action(detail=True, methods=['GET',])
-def hightlight(self, request, *args, **kwargs):
-    return Response(CustomSerializerThing(...))
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -107,5 +110,54 @@ REST_FRAMEWORK = [
         'PAGE_SIZE': 10,
 ]
 
+################## rest-framework-simplejwt ######################################
+pip install djangorestframework-simplejwt
+pip instlal djangorestframework-simplejwt[crypto]
+
+REST_FRAMEWORK = {
+        'DEFAULT_PERMISSION_CLASSES':     ['rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly',], 
+        'DEFAULT_AUTHENTICATION_CLASSES': ['rest_framework_simplejwt.authentication.JWTAuthentication'],
+}
+
+from rest_framework_simplejwt.views import (TokenObtainPairView, TokenRefreshView);
+urlpatterns = [
+  path('api/token/',         TokenObtainPairView.as_view(), name='token_obtain_pair'), # POST with {"username":"...", "password": "..."}
+  path('api/token/refresh/', TokenRefreshView.as_view(),    name='token_refresh'),     # POST with {"refresh": "..."}
+]
+
+-H "Authorization: Bearer MY-ACCESS-TOKEN" on any protected view
+
+INSTALLED_APPS = ['rest_framework_simplejwt',]
+
+CUSTOMIZE OPTIONS = https://django-rest-framework-simplejwt.readthedocs.io/en/latest/settings.html
+
+from rest_framework_simplejwt.tokens import RefreshToken
+def get_tokens_manually(user):
+    refresh = RefreshToken.for_user(user)
+
+    return {
+      'refresh': str(refresh),
+      'access' : str(refresh.access_token),
+    }
+
+
 ################## TODO: check the api guide
 # https://www.django-rest-framework.org/api-guide/requests/
+
+
+#################### FAQ #################################################
+
+# ADD EXTRA PROPERTY TO SERIALIZER REPRESENTATION ???
+def perform_create(self, serializer):#inside the APIView or any class that implements mixins views of DRF:
+    serializer.save(owner=self.request.user) # add the extra user logged to associate with the serializer data on save
+
+# INCLUDE REVERSE?
+snippets = serializers.PrimarykeyRelatedField(many=True, queryset=Snippet.objects.all())
+
+# DISPLAY REPRESENTATION BUT DON'T MODIFY?
+owner = serializers.ReadOnlyField(source='owner.username')
+
+# HOW TO ADD CUSTOM ENDPOINT TO VIEWSETS?
+@action(detail=True, methods=['GET',])
+def hightlight(self, request, *args, **kwargs):
+    return Response(CustomSerializerThing(...))

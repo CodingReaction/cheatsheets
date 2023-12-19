@@ -15,7 +15,7 @@ raise Http404()
 ## CBV: https://ccbv.co.uk/
 
 ################# SIGNALS ######################################
-def my_receiver_function(sender, **kwargs): # declare a receiver
+def my_receiver_function(sender, **kwargs): # declare a receiver always with kwargs
     print("Request finished")
 
 from django.core.signals import request_finished # Connect signal method 1
@@ -210,6 +210,13 @@ REDIS: in-memory db, runs a server: redis-py binding
 DATABASE: stores in db, fast if well-indexed db (needs to set LOCATION = my_cache_table
 FILESYSTEM: each cache value = separate file. LOCATION = subdirectory path
 LOCAL MEMORY CACHING: default one, benefits of mem cached but per-process/thread-safe
+# Different uses of cache:
+PER SITE [using middleware conf]
+PER VIEW [using decorators, mixins or directly in url with cache_page(TIME)(my_view)]
+PER TEMPLATE FRAGMENT [{% load cache %} {% cache 500 sidebar request.user.username %} ... {% endcache %}]
+LOW LEVEL [orm result, dicst or python objects in general
+DOWNSTREAM CACHE [by ISP, by Browser]
+
 #Arguments of CACHES setting:
 TIMEOUT: None(never expires) | 5 (5 seconds) | 0 (inmediate expire)
 OPTIONS: MAX_ENTRIES | CULL_FREQUENCY | no_delay | max_pool_size (depends on caching strategy)
@@ -224,21 +231,29 @@ CACHE_MIDDLEWARE_SECONDS = 300
 # Per-view cache: using a decorator
 @cache_control(private=True) # 2 kinds of caches: public (server), private( browser), bank account
 @cache_control(max_age=3600)
+@never_cache() # disable cache on this page
 @vary_on_headers("User-Agent", "Cookie") # @vary_on_cookie
 @cache_page(60 * 15, cache='special_cache')
 def my_view(request):
     pass
 
 # Low level cache api:
+from django.core.cache import caches
+cache = caches["myalias"] #raises InvalidCacheBackendError if myalias doesn't exists
+
 cache.add("add_key", "Initial value") # add if doesn't exists
-cache.set('my_key', "hello world", 30)
+cache.set('my_key', "hello world", 30) # 30 is the timeout
 cache.get('my_key', default=None) #returns None if expired or doesnt exists
+cache.get_or_set("key", value)
 cache.get_many(['a', 'b', 'c'])
 cache.set_many({'a': 1, 'b': 2, 'c': 3})
 cache.delete('my_key')
 cache.delete_many([...])
 cache.clear()
 cache.touch('my_key', 10) # set new expiration time
+
+@vary_on_header("User-Agent", "Cookie") # DOWNSTREAM CACHE
+
 
 ######################################### FORMS ##################################
 from django import forms
@@ -442,9 +457,32 @@ s = SessionStore(session_key='2bfsdafsdafsssa')
 
 
 ################################# PAGINATION #########################################
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, PageNotAnInteger
 paginator = Paginator(Product.objects.all(), 100) # 100 items per page
-page_obj = paginator.get_page(request.GET.get('page'))
+page_num = request.GET.get('page')
+try:
+    page_obj = paginator.get_page(page_num)
+except PageNotAnInteger:
+    page_obj = paginator.page(1)
+except EmptyPage:
+    page_obj = paginator.page(paginator.num_pages)
+context = {'page_obj': page_obj}
+return render(request, 'index.html', context)
+
+{% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}"> PREV </a>
+{% endif %}
+<span> {{ page_obj.number }} / {{ page_obj.num_pages }} (Total entities: {{ page_obj.count}} </span>
+{% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}">NEXT </a>
+{% endif %}
+
+page_obj.get_range() # range(1, 3)
+page_obj.object_list # ['max', 'pepo']
+
+class MyView(ListView):
+    paginate_by = 2
+    model = MyModel
 
 # Decorators: django.contrib.auth.decorators
 
@@ -509,8 +547,6 @@ class Person(...)
 class Group(...) members = models.ManyToManyField(Person, through="Membership")
 class Membership(...): person = models.Foreign.. ; group = models.Foreign..., invite_reason = models.CharField(...)
 
-
-
 ### OTHERS
 BinaryField()
 DecimalField(max_digits=None, decimal_places=None)
@@ -545,7 +581,6 @@ class BookingQuerySet(models.QuerySet):
         return self.filter(start_date__year=year)
 
     # etc.
-
 
 class Booking(models.Model):
     # fields etc
@@ -582,11 +617,155 @@ class Customer(models.Model):
 TODO::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-## Testing
+############################################# Testing #######################################
+# Comes with TEST CLIENT + SimpleTestCase/TransactionTestCase/LiveServerTestCase/TestCase (in django.test)
+# RequestFactory: generate a HttpRequest used as an input for testing a response
+# EXTRA libs: https://coverage.readthedocs.io/en/latest/ https://github.com/FactoryBoy/factory_boy https://pypi.org/project/mock/
+# $ coverage run manage.py test whatever -v 2
+# $ coverage html
+# uses python std unittest lib
+# python manage.py test
+
+from django.test import TestCase #django.test.TestCase subclass of unittest.TestCase
+from .models import Animal
+from selenium import webdriver
+
+class HomepageTestCase(SimpleTestCase): # A) SimpleTestCase: when no DB access is needed
+    def test_url_exists(self):
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+
+    def test_url_available_by_name(self):
+        response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, 200)
+
+
+    def test_template_name_correct(self):
+        response = self.client.get(reverse("home"))
+        self.assertTemplateUser(response, "pages/home.html")
+
+    def test_template_content(self):
+        response = self.client.get(reverse("home"))
+        # response.context[-1]["animal"]
+        self.assertContains(resposne, "<h1>Homepage</h1>")
+        self.assertNotContains(response, "Not on the page")
+
+
+class PostTest(TestCase): # B) TestCase: most common used, test db queries
+    @classmethod
+    def setUpTestData(cls): # instantiated for the entire test class instead for every unit test
+        cls.post = Post.objects.create(text="This is a test!")
+
+    def test_model_content(self):
+        self.assertEqual(self.post.text, "This is a test!")
+
+    def test_url_exists_at_correct_location(self):
+        response = self.client.get("/posts/")
+        self.assertEqual(response.status_code, 200)
+
+    def test_homepage(self):
+        response = self.client.get(reverse("posts"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "posts/posts.html")
+        self.assertContains(response, "This is a test!")
+
+
+class AnimalTestCase(TestCase): ## DATA UNITTEST
+    def setUp(self):
+        Animal.objects.create(name="lion", sound="roar")
+        Animal.objects.create(name="cat", sound="meow")
+        self.driver = webdriver.Firefox()
+
+    def test_animals_can_speak(self): # testing model data
+        lion = Animal.objects.get(name="lion")
+        self.assertEqual(lion.speak(), 'The lion says "roar"')
+        self.assertTrue(isinstance(lion, Animal))
+
+    def test_animals_list_view(self): #testing view
+        lion = Animal.objects.get(name="lion")
+        url = reverse("animals.views.list_animals")
+        resp = self.client.get(url)
+
+        set.assertEqual(response.status_code, 200)
+        self.assertIn(lion.name, response.content)
+
+    def test_signup_fire(self): # SELENIUM
+        self.driver.get("http://localhost:8000/add/")
+        self.driver.find_element_by_id("id_title").send_keys("test title")
+        self.driver.find_element_by_id("id_body").send_keys("test body")
+        self.driver.find_element_by_id("submit").click()
+        self.assertIn("http://localhost:8000/", self.driver.current_url)
+
+    def test_valid_form(self):
+        lion = Animal.objects.create(name="lion")
+        data = {"name": lion.name}
+        form = AnimalForm(data=data)
+        self.assertTrue(form.is_valid())
+
+    def tearDown(self):
+        self.driver.quit
+
+class SimpleTest(TestCase): # using REQUEST FACTORY
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = User.objects.create_user(username="pepo", email="pepo@pepo.com")
+
+    def test_details(self):
+        request = self.factory.get("/customer/details") #create GET req instance
+        request.user = self.user # coz middleware not supported, simulate logged user setting request.user manually
+        request.user = AnonymouseUser()
+
+        response = my_view(request) # check fbv
+        response = MyView.as_view()(request) # check cbv
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_environment_set_in_context(self):
+        request = RequestFactory().get("/")
+        view = HomeView()
+        view.setup(request)
+
+        context = view.get_context_data()
+        self.assertIn("environment", context)
+
+## TEST CLIENT
+from django.test import Client
+
+c = Client() # Client(enforce_csrf_checks=True)
+response = c.post("/login/", {"username": "john", "password": "smith"})
+response.status_code #200
+response = c.get("/customer/details/", {"name": "Pedro"}) # /customer/details/?name=Pedro
+response.content # b'<!DOCTYPE html...
+
+CLIENT ARGS:
+    headers={"user-agent": "curl/7.79.1", "accept": "application/json"})
+
+### TODO: DRF testing
+
 ## Mailing
 ## i18n
 ## advanced with Subquery: https://docs.djangoproject.com/en/4.2/ref/models/expressions/
 
+############## MIDDLEWARE ############################
+"""During the REQUEST cycle, executed in topdown order"""
+""   call process_request() / process_view() ""
+"      DO THE VIEW WORK "
+"""During the RESPONSE cycle, executed bottom up order"""
+""   call process_exception() / process_template_response() / process_response() ""
+"      DELIVERS RESPONSE TO CLIENT "
+
+## Custom middleware
+# 1- middleware.py inside some app/
+class StackOverflowMiddleware(object):
+    def process_exception(self, request, exception):
+        if not settings.DEBUG:
+            return None
+        print(exception.__class__.__name__)
+        print(exception.message)
+        return None
+
+# 2- add to settings.py
+    MIDDLEWARE_CLASSES = {..., 'app_name.middleware.StackOverflowMiddleware', ...}
 
 ############### MANAGERS: https://docs.djangoproject.com/en/4.2/topics/db/managers/ ####################################
 

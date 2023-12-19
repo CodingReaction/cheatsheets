@@ -66,3 +66,30 @@ const {mutate, mutateAsync: addTodoMutation} = useMutation({
 
 if (isLoading) return <div>Loading...</div>
 <button onClick={async (evt) => await addTodoMutation({title})}>Add todo </button>
+
+/************************ JEST **********************************/
+import {render, fireEvent} from "@testing-library/react";
+import Counter from "./MyComponent";
+
+beforeAll(()=> recreateDb());
+afterAll(()=> clearDb());
+beforeEach(()=>...);
+afterEach(()=>...);
+
+describe(Counter, () =>{
+  it("check initial value", () => {
+    const initialValue = 0;
+    const {getByTestId} = render(<Counter initial={initialValue} />);
+    const count = getByTestId("count").innerText; // <p data-testid="count"> {{ count }} </p>
+    expect(count).toEqual(initialValue);
+  });
+
+  it("check if button works", () => {
+    const initialValue = 0;
+    const {getByTestId, getByRole} = render(<Counter initial={initialValue} />);
+    const button = getByRole("button", {name: "Increment"}); // <button> Increment </button>
+    fireEvent.click(button);
+    const count = getByTestId("count").innerText; 
+    expect(count).toEqual(initialValue);
+  });
+});
