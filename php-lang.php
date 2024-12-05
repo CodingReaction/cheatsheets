@@ -1,11 +1,76 @@
+/********************* CLI ******************/
+$php -S localhost:8080  // run dev server
 
-$resource_from_disk = file_get_contents(__DIR__ . '/../' . 'data.json');
+<?php
+/************ VARIABLES ***************/
+$name = "Max" // variables with $
+$fullName = $name . " LastName" // concat string with .
+$fullName = "$name LastName" // string templating
+<?= $fullName ?> // different way to print
+/*************** SHORTHAND SINTAX ***************/
+$names = ["Pedrito", "Pablito", "Clavito"]
+<?php foreach ($names as $name): ?>
+  <?= $name ?>
+<?php endforeach; ?>
+/***************  BASIC SCRIPT *******************/
+$name = "Max";
+echo "Printing your name {$name}";
+$username = $name ?? 'Guest'; // NULL COALESCING
+$birthday = $birthday?->format('Y-m-d');
 
+define(PI, 3.14); // CONSTANTS
 
-echo "<pre>"
 var_dump("anything")
 die()
 echo "</pre>"
+/************* DATA STRUCTURES *****************/
+$names = array("Max", "Otto"); // ARRAY
+$names = ["Max", "Otto"];
+[$a, $b] = $names;
+$myName = $names[0]
+
+array_push($names, "Sergio");
+$names[] = "Sergio"; // SHORTHAND push to array
+
+$name_last  = array_pop($names); // "Sergio"
+$name_first = array_shift($names); // "Max"
+$names_rev  = array_reverse($names);
+$count      = count($names);  // 3
+
+$capitals = array("USA" => "Washington DC", "Uruguay" => "Montevideo"); // MAP
+$myCapital = $capitals["Uruguay"]
+
+$keys   = array_keys($capitals);
+$values = array_values($capitals);
+$flip   = array_flip($capitals);  // "Montevideo" => "Uruguay"
+
+$other  = array_map(fn($thing) => $thing->id, $names);
+in_array($thing, $array); // true or false
+if (array_key_exists($key, $array)){...} // check if the key is defined
+
+$filterList = array_filter($books, function ($book) { return $book["releaseYear"] > 1980;})
+
+enum Status: int{ // Status::DRAFT
+  case DRAFT;
+  case ARCHIVED;
+}
+/*************** SUPER GLOBALS ******************/
+$_GET, $_POST, $_SERVER
+<form action="php-lang.php" method="post"> <input name="username" /></form>
+
+htmspecialchars($_SERVER["PHP_SELF"]); // the current filename, avoid xss
+$_SERVER["REQUEST_METHOD"] == "POST"
+$_SERVER["REQUEST_URI"] === "/"
+
+$allowed_ext = ["png", "jpg", "jpeg"]
+$_FILES["upload"]; // enctype="multipart/formdata"  ["name"| "size" | "tmp_name"]
+move_uploaded_file($file_tmp, $target_dir);
+
+  $username = $_POST["username"];
+?>
+
+
+$resource_from_disk = file_get_contents(__DIR__ . '/../' . 'data.json');
 
 parse_url($_SERVER['REQUEST_URI']); // ['path'=>..., 'query'=>...]
 http_build_query($data); // concatenate a Dict in order to create a querystring
@@ -21,72 +86,36 @@ $params = session_get_cookie_params();
 setcookie('PHPSESSIONID', '', time()-3600, $params['path'], $params['domain'], $params['httponly']);
 header("Location: /");
 exit();
-				    
+
 
 $root_folder = __DIR__ . "..";
 extract($attrArray); // import symbols to current closure
-				    
-if (array_key_exists($key, $array)){...}
+
 
 $className = (new ReflextionClass($this))->getShortName();
 
-/*************** SHORTHAND SINTAX ***************/
-<?php foreach ($names as $name): ?>
-  <?= $name ?>
-<?php endforeach; ?>
-
-/***************  BASIC SCRIPT *******************/
-<?php
-  $name = "Max";
-  echo "Printing your name {$name}";
-
-  $username = $name ?? 'Guest'; // NULL COALESCING
-  $birthday = $birthday?->format('Y-m-d');
-
-  define(PI, 3.14); // CONSTANTS
-?>
-/*************** SUPER GLOBALS ******************/
-<?php
-$_GET, $_POST, $_SERVER
-<form action="php-lang.php" method="post"> <input name="username" /></form>
-
-htmspecialchars($_SERVER["PHP_SELF"]); // the current filename, avoid xss
-$_SERVER["REQUEST_METHOD"] == "POST"
-
-$allowed_ext = ["png", "jpg", "jpeg"]
-$_FILES["upload"]; // enctype="multipart/formdata"  ["name"| "size" | "tmp_name"]
-move_uploaded_file($file_tmp, $target_dir);
-
-  $username = $_POST["username"];
-?>
 //************** COOKIES ***********************/
 <?php
-  setcookie("cookie_key", "value", time() + (3000), "/"); 
+  setcookie("cookie_key", "value", time() + (3000), "/");
   if (isset($_COOKIE["cookie_key"]){...}
   foreach($_COOKIE as $key => $value){...}
 ?>
 /*************** SESSION ***********************/
-<?php
   session_start();
   session_destroy();
   $_SESSION["username"] = "Max";
 
   header("Location: home.php"); // redirect
-?>
 /************** EXCEPTIONS *********************/
-<?php
   try{...} catch(exception_name){...}
   try{...} catch (Exception $e){...}
   throw new Exception("error");
-?>
 /************** MATH ***************************/
-<?php
   $positive = abs($x);
   $total    = round($x); // floor($x) | ceil($x)
   $sq       = pow($x, 2);
   $upper    = max($x, $y, $z); // min(...)
   $pi_val   = pi();
-?>
 /************* CONTROL FLOW ********************/
 <?php
   if (...){ } elseif (...) { } else { };
@@ -110,33 +139,6 @@ while ($doing) {...}
 yield $result; // GENERATORS
 
 
-?>
-/************* DATA STRUCTURES *****************/
-<?php
-$names = array("Max", "Otto");
-$names = ["Max", "Otto"];
-[$a, $b] = $names;
-
-array_push($names, "Sergio");
-$names[] = "Sergio"; // SHORTHAND push to array
-
-$name_last  = array_pop($names); // "Sergio"
-$name_first = array_shift($names); // "Max"
-$names_rev  = array_reverse($names);
-$count      = count($names);  // 3
-
-$capitals = array("USA" => "Washington DC", "Uruguay" => "Montevideo");
-$keys   = array_keys($capitals);
-$values = array_values($capitals);
-$flip   = array_flip($capitals);  // "Montevideo" => "Uruguay"
-
-$other  = array_map(fn($thing) => $thing->id, $names);
-in_array($thing, $array); // true or false
-
-enum Status: int{ // Status::DRAFT
-  case DRAFT;
-  case ARCHIVED;
-}
 ?>
 /************ STD LIB ***************************/
 <?php
@@ -201,90 +203,74 @@ password_verify($password, $password_hashed);
  $statement = $pdo->prepare(MY_SQL_QUERY);
  $statement->execute();
  $results = $statement->fetchAll();
- 
+
 ?>
 /************* OOP *******************************/
-<?php
-  declare(strict_types=1)
+declare(strict_types=1)
 
-  ///  CLASS ///
-  class Transaction extends Paperwork implements Notify, Usable{ // readonly class Transaction | float readonly $amount
-    public float $amount;  // ?float $amount
-    private string $expired = "yeah";
+///  CLASS ///
+class Transaction extends Paperwork implements Notify, Usable{ // readonly class Transaction | float readonly $amount
+  public float $amount;  // ?float $amount
+  private string $expired = "yeah";
 
-    public function __construct(float $amount, string $description){
-      parent::__construct($amount);
-      $this->$amount = $amount;
-    }
-
-    public function __construct(public float $amount, public string $expired){} // PROMOTION
+  public function __construct(float $amount, string $description){
+    parent::__construct($amount);
+    $this->$amount = $amount;
   }
 
-  require_once './Transaction.php';  
+  public function __construct(public float $amount, public string $expired){} // PROMOTION
+}
 
-  $transaction = new Transaction(10, "nop");
-  echo($transaction->amount);
-  var_dump($transaction);
+require_once './Transaction.php';
 
-  ////  TRAITS /////
-  trait Commentable{
-    public function sayHi($name){ echo "Hi {$name}"; }
-  }
+$transaction = new Transaction(10, "nop");
+echo($transaction->amount);
+var_dump($transaction);
 
-  class Post{
-    use Commentable;
-  }
+////  TRAITS /////
+trait Commentable{
+  public function sayHi($name){ echo "Hi {$name}"; }
+}
 
-  ///   ANONYMOUS CLASS ///
-  $app->setThing(new class implements Bla{ ... });
-?>
+class Post{
+  use Commentable;
+}
+
+///   ANONYMOUS CLASS ///
+$app->setThing(new class implements Bla{ ... });
 /************ IMPORTS ***************************/
-<?php
- include("header.html"); // include_once "something.php"
- include("body.html");
- include("footer.html");
-?>
+include("header.html"); // include_once "something.php"
+include("body.html");
+include("footer.html");
 /*********** NAMESPACES *****************************/
-<?php
- require "Item.php";
- require "functions.php";
+require "Item.php";
+require "functions.php";
 
- use App\Models\Admin\Item;  // namespace App\Models\Admin
- use const App\Utils\MAX;
- use function App\Utils\sayHello as saludate;
-?>
+use App\Models\Admin\Item;  // namespace App\Models\Admin
+use const App\Utils\MAX;
+use function App\Utils\sayHello as saludate;
 /************ AUTOLOAD *******************************/
-<?php
- // CLASS AUTOLOAD
- spl_autoload_register(function ($class){// RUN when a class not required is used
-   require "$class.php";		             // CLASS autoload
-   require str_replace('\\', '/', $class) . '.php'); // NAMESPACE autoload
- });
-?>
+spl_autoload_register(function ($class){// RUN when a class not required is used
+  require "$class.php";		             // CLASS autoload
+  require str_replace('\\', '/', $class) . '.php'); // NAMESPACE autoload
+});
 /*********** ANOTATIONS or DECORATORS ***************/
-<?php
-  #[Route(Http::GET, '/hello/world')]
-  class HelloWorldController{
-    public function __invoke(){
-      return 'Hello world';
-    }
+#[Route(Http::GET, '/hello/world')]
+class HelloWorldController{
+  public function __invoke(){
+    return 'Hello world';
   }
+}
 
-  function login($user, #[SensitiveParameter] $password){...}
-?>
+function login($user, #[SensitiveParameter] $password){...}
 /************ CURL **********************************/
-<?php
-  $resource = curl_init("http://google.com");
-  curl_setopt($resource, CURLOPT_RETURNTRANSFER, true); 
-  $result = curl_exec($resource);
-  $info   = curl_getinfo($resource); //curl_getinfo($resource, CURLINFO_HTTP_CODE);
-  curl_close($resource);
-?>
+$resource = curl_init("http://google.com");
+curl_setopt($resource, CURLOPT_RETURNTRANSFER, true);
+$result = curl_exec($resource);
+$info   = curl_getinfo($resource); //curl_getinfo($resource, CURLINFO_HTTP_CODE);
+curl_close($resource);
 /************ JSON **********************************/
-<?php
-  json_encode($php_map, OPTIONAL); // OPTIONAL = JSON_FORCE_OBJECT | JSON_PRETTY_PRINT
-  json_decode($json_string);
-
-  file_put_contents('data.json', $encoded_data);
-  $json_data = file_get_contents('data.json');
-?>
+json_encode($php_map, OPTIONAL); // OPTIONAL = JSON_FORCE_OBJECT | JSON_PRETTY_PRINT
+json_decode($json_string);
+file_put_contents('data.json', $encoded_data);
+$json_data = file_get_contents('data.json');
